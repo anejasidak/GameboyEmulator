@@ -57,4 +57,6 @@ struct s_cpu
     uint16_t pc;
 };
 
+int cpuExecuteInstruction(uint16_t opcode);
+
 #endif

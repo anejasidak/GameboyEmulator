@@ -19,4 +19,7 @@ _Bool readCartridge(const char* filename);
 
 void loadGameIntoMemory();
 
+void executeNextInstruction();
+
+
 #endif

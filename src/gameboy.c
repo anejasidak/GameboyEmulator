@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+
 #include "gameboy.h"
 
 static struct s_gameboy *gameboy;
@@ -37,4 +39,11 @@ _Bool readCartridge(const char *filename)
 void loadGameIntoMemory()
 {
     memcpy(&gameboy->memory, &gameboy->cartridge, ROM_BANK_1_END + 1);
+}
+
+void executeNextInstruction()
+{
+    uint16_t opcode = memory_get_ins(gameboy->cpu.pc);
+    gameboy->cpu.pc = gameboy->cpu.pc + 2;
+    cpuExecuteInstruction(opcode);
 }
