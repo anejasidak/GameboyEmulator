@@ -44,13 +44,20 @@ int initializeView()
 
 int main(int argc, char **argv)
 {
-    struct s_gameboy gameboy;
-    memset(&gameboy, 0, sizeof(struct s_gameboy));
+    if (argc < 2)
+    {
+        printf("Please provide a file to load\n");
+        return -1;
+    }
+    intializeSystem();
 
-    if (!initializeView())
+    if (!initializeView() || !readCartridge(argv[1]))
     {
         return -1;
     }
+
+    loadGameIntoMemory();
+    
     bool isActive = true;
     while (isActive)
     {
