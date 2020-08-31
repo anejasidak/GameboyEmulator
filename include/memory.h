@@ -9,4 +9,5 @@ struct s_memory
     uint8_t memoryArray[MEMORY_SIZE];
 };
 
+void intializeMemory(struct s_memory *mem);
 #endif

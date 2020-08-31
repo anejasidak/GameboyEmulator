@@ -1,1 +1,54 @@
+#include <assert.h>
 #include "memory.h"
+
+#include <stdint.h>
+#include "config.h"
+
+static struct s_memory *memory;
+
+void intializeMemory(struct s_memory *mem)
+{
+    memory = mem;
+}
+static void memory_is_in_bound(int index)
+{
+    assert(index >= 0 && index < MEMORY_SIZE);
+}
+void memory_set(int index, uint8_t value)
+{
+    // Need to implement banking
+
+    memory_is_in_bound(index);
+    if (index <= ROM_BANK_0_END)
+    {
+    }
+    else if (index <= ROM_BANK_1_END)
+    {
+    }
+    else if (index >= ECHO_MEM_START && index <= ECHO_MEM_END)
+    {
+        memory->memoryArray[index] = value;
+        memory_set(WRAM_BANK_0_START + index - ECHO_MEM_START, value);
+    }
+    else if (index >= RESTRICTED_RAM_START && index <= RESTRICTED_RAM_END)
+    {
+    }
+    else
+    {
+        memory->memoryArray[index] = value;
+    }
+}
+uint8_t memory_get(int index)
+{
+    // Need to implement banking
+    memory_is_in_bound(index);
+    return memory->memoryArray[index];
+}
+
+uint16_t memory_get_ins(int index)
+{
+    uint8_t byte1 = memory_get(index);
+    uint8_t byte2 = memory_get(index + 1);
+
+    return byte1 << 8 | byte2;
+}

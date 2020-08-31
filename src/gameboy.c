@@ -9,6 +9,8 @@ struct s_gameboy *intializeSystem()
     struct s_gameboy gb;
     memset(&gb, 0, sizeof(struct s_gameboy));
 
+    intializeMemory(&gb.memory);
+
     gameboy = &gb;
     return gameboy;
 }
@@ -34,5 +36,5 @@ _Bool readCartridge(const char *filename)
 
 void loadGameIntoMemory()
 {
-    memcpy(&gameboy->memory, &gameboy->cartridge, ROM_BANK_01);
+    memcpy(&gameboy->memory, &gameboy->cartridge, ROM_BANK_1_END + 1);
 }

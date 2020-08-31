@@ -10,6 +10,7 @@
 
 #include "config.h"
 #include "gameboy.h"
+#include "test.h"
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -49,7 +50,7 @@ int main(int argc, char **argv)
         printf("Please provide a file to load\n");
         return -1;
     }
-    intializeSystem();
+    struct s_gameboy *gameboy = intializeSystem();
 
     if (!initializeView() || !readCartridge(argv[1]))
     {
@@ -57,6 +58,8 @@ int main(int argc, char **argv)
     }
 
     loadGameIntoMemory();
+
+    test_printRomBanks(gameboy, 256);
     
     bool isActive = true;
     while (isActive)
