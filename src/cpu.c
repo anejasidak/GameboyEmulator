@@ -1,18 +1,40 @@
 #include "cpu.h"
 #include "memory.h"
 #include "config.h"
+#include "cb.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 
 static struct s_cpu *cpu;
 
-static void setFlag(uint8_t flag);
-static void resetFlag(uint8_t flag);
-static void clearFlags();
-static void ld16Bit(uint16_t value, uint16_t *reg);
+static void ld8BitToRegister(uint8_t value, uint8_t *reg);
+static void ld16BitToRegister(uint16_t value, uint16_t *reg);
+static void ld8BitToMemory(uint8_t value, uint16_t index);
 static void XOR(uint8_t value);
 
+const uint8_t instructionSize[256] = {
+    1, 3, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, 2, 1,
+    2, 3, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 2, 1,
+    2, 3, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 2, 1,
+    2, 3, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 2, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 3, 3, 3, 1, 2, 1, 1, 1, 3, 1, 3, 3, 2, 1,
+    1, 1, 3, 0, 3, 1, 2, 1, 1, 1, 3, 0, 3, 0, 2, 1,
+    2, 1, 2, 0, 0, 1, 2, 1, 2, 1, 3, 0, 0, 0, 2, 1,
+    2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 3, 1, 0, 0, 2, 1};
+
+uint8_t getInstructionSize(uint8_t index)
+{
+    return instructionSize[index];
+}
 void initializeCpu(struct s_cpu *c)
 {
     cpu = c;
@@ -28,9 +50,12 @@ static int cpuExecute0(uint32_t opcode)
     {
     case 0x01000000:
     {
-        cpu->pc += 3;
-        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->bc);
+        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->bc);
         cycles = 12;
+    }
+    break;
+    case 0x06000000:
+    {
     }
     break;
     default:
@@ -52,8 +77,7 @@ static int cpuExecute1(uint32_t opcode)
     {
     case 0x11000000:
     {
-        cpu->pc += 3;
-        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->de);
+        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->de);
         cycles = 12;
     }
     break;
@@ -76,8 +100,7 @@ static int cpuExecute2(uint32_t opcode)
     {
     case 0x21000000:
     {
-        cpu->pc += 3;
-        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->hl);
+        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->hl);
         cycles = 12;
     }
     break;
@@ -99,9 +122,15 @@ static int cpuExecute3(uint32_t opcode)
     {
     case 0x31000000:
     {
-        cpu->pc += 3;
-        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->sp);
+        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->sp);
         cycles = 12;
+    }
+    break;
+    case 0x32000000:
+    {
+        ld8BitToMemory(cpu->a, cpu->hl);
+        cpu->hl--;
+        cycles = 8;
     }
     break;
     default:
@@ -225,56 +254,48 @@ static int cpuExecuteA(uint32_t opcode)
     {
     case 0xA8000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->b);
     }
     break;
     case 0xA9000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->c);
     }
     break;
     case 0xAA000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->d);
     }
     break;
     case 0xAB000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->e);
     }
     break;
     case 0xAC000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->h);
     }
     break;
     case 0xAD000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->l);
     }
     break;
     case 0xAE000000:
     {
-        cpu->pc += 1;
         cycles = 8;
         XOR(memory_get(cpu->hl));
     }
     break;
     case 0xAF000000:
     {
-        cpu->pc += 1;
         cycles = 4;
         XOR(cpu->a);
     }
@@ -313,6 +334,12 @@ static int cpuExecuteC(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xCB000000:
+    {
+
+        cpuExecuteCB(cpu, opcode);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -349,7 +376,6 @@ static int cpuExecuteE(uint32_t opcode)
     {
     case 0xEE000000:
     {
-        cpu->pc += 2;
         cycles = 8;
         XOR((opcode & 0x00ff0000) >> 16);
     }
@@ -470,26 +496,35 @@ int cpuExecuteInstruction(uint32_t opcode)
     return cycles;
 }
 
-static void setFlag(uint8_t flag)
+void setFlag(uint8_t flag)
 {
     cpu->f |= flag;
 }
-static void resetFlag(uint8_t flag)
+void resetFlag(uint8_t flag)
 {
     cpu->f &= flag;
 }
 
-static void clearFlags()
+void clearFlags()
 {
     cpu->f = 0;
 }
 
-static void ld16Bit(uint16_t value, uint16_t *reg)
+static void ld16BitToRegister(uint16_t value, uint16_t *reg)
 {
 
     uint8_t highByte = value >> 8;
     uint8_t lowByte = value & 0xff;
     *reg = (lowByte << 8) | highByte;
+}
+
+static void ld8BitToRegister(uint8_t value, uint8_t *reg)
+{
+    *reg = value;
+}
+static void ld8BitToMemory(uint8_t value, uint16_t index)
+{
+    memory_set(index, value);
 }
 
 static void XOR(uint8_t value)

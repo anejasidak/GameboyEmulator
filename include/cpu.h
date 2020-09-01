@@ -57,7 +57,11 @@ struct s_cpu
     uint16_t pc;
 };
 
-void initializeCpu(struct s_cpu* c);
+void initializeCpu(struct s_cpu *c);
 int cpuExecuteInstruction(uint32_t opcode);
+uint8_t getInstructionSize(uint8_t index);
 
+void setFlag(uint8_t flag);
+void resetFlag(uint8_t flag);
+void clearFlags();
 #endif

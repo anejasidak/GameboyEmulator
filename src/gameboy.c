@@ -43,6 +43,8 @@ void loadGameIntoMemory()
 void executeNextInstruction()
 {
     uint32_t opcode = memory_get_ins(gameboy->cpu.pc);
+    gameboy->cpu.pc += getInstructionSize(opcode >> 24);
+    printf("Pc is: %0x\n", gameboy->cpu.pc);
     printf("Executing %08x instruction\n", opcode);
     cpuExecuteInstruction(opcode);
 }
