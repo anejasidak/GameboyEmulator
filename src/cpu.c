@@ -30,8 +30,8 @@ const uint8_t instructionSize[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 3, 3, 3, 1, 2, 1, 1, 1, 3, 1, 3, 3, 2, 1,
     1, 1, 3, 0, 3, 1, 2, 1, 1, 1, 3, 0, 3, 0, 2, 1,
-    2, 1, 2, 0, 0, 1, 2, 1, 2, 1, 3, 0, 0, 0, 2, 1,
-    2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 3, 1, 0, 0, 2, 1};
+    2, 1, 1, 0, 0, 1, 2, 1, 2, 1, 3, 0, 0, 0, 2, 1,
+    2, 1, 1, 1, 0, 1, 2, 1, 2, 1, 3, 1, 0, 0, 2, 1};
 
 uint8_t getInstructionSize(uint8_t index)
 {
@@ -93,7 +93,7 @@ static int cpuExecute0(uint32_t opcode)
     break;
     case 0x0A000000:
     {
-        ld8BitToRegister(cpu->bc, &cpu->a);
+        ld8BitToRegister(memory_get(cpu->bc), &cpu->a);
     }
     break;
     case 0x0C000000:
@@ -158,7 +158,7 @@ static int cpuExecute1(uint32_t opcode)
     break;
     case 0x1A000000:
     {
-        ld8BitToRegister(cpu->de, &cpu->a);
+        ld8BitToRegister(memory_get(cpu->de), &cpu->a);
     }
     break;
     case 0x1C000000:
@@ -1172,7 +1172,8 @@ static int cpuExecuteF(uint32_t opcode)
     break;
     case 0xFA000000:
     {
-        ld8BitToRegister((opcode & 0x0000ff00) >> 8, &cpu->a);
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        ld8BitToRegister(memory_get(getBigEndianValue(imm)), &cpu->a);
     }
     break;
     case 0xFE000000:
