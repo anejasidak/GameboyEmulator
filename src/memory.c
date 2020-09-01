@@ -16,7 +16,7 @@ static void memory_is_in_bound(int index)
 {
     assert(index >= 0 && index < MEMORY_SIZE);
 }
-void memory_set(int index, uint8_t value)
+void memory_set(uint16_t index, uint8_t value)
 {
     // Need to implement banking
 
@@ -40,7 +40,7 @@ void memory_set(int index, uint8_t value)
         memory->memoryArray[index] = value;
     }
 }
-uint8_t memory_get(int index)
+uint8_t memory_get(uint16_t index)
 {
     // Need to implement banking
     memory_is_in_bound(index);

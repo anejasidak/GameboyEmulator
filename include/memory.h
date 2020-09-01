@@ -11,9 +11,9 @@ struct s_memory
 
 void intializeMemory(struct s_memory *mem);
 
-void memory_set(int index, uint8_t value);
+void memory_set(uint16_t index, uint8_t value);
 
-uint8_t memory_get(int index);
+uint8_t memory_get(uint16_t index);
 
 uint32_t memory_get_ins(int index);
 #endif

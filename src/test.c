@@ -42,14 +42,14 @@ static void test_ld8(struct s_gameboy *gameboy)
 
     /*------------------------*/
 
-    gameboy->cpu.b = 0xf0;
+    gameboy->cpu.b = 0xf4;
     cpuExecuteInstruction(0x50000000);
 
-    printf("After storing 0xf0 in reg b and, 0x50 Instruction (LD D,B), value in reg d is: %0x\n", gameboy->cpu.d);
+    printf("After storing 0xf4 in reg b and, 0x50 Instruction (LD D,B), value in reg d is: %0x\n", gameboy->cpu.d);
 
     gameboy->cpu.hl = 0xfffe;
-    memory_set(0xfffe, 0x55);
+    cpuExecuteInstruction(0x36590000);
     cpuExecuteInstruction(0x46000000);
 
-    printf("After storing 0xff in memory pointed by hl reg and, 0x46 Instruction (LD B, (HL)), value in reg b is: %0x\n", gameboy->cpu.b);
+    printf("After storing 0x59 in memory pointed by hl reg and, 0x46 Instruction (LD B, (HL)), value in reg b is: %0x\n", gameboy->cpu.b);
 }

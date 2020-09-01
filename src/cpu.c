@@ -10,7 +10,6 @@ static struct s_cpu *cpu;
 
 static void ld8BitToRegister(uint8_t value, uint8_t *reg);
 static void ld16BitToRegister(uint16_t value, uint16_t *reg);
-static void ld8BitToMemory(uint8_t value, uint16_t index);
 static void XOR(uint8_t value);
 
 const uint8_t instructionSize[256] = {
@@ -40,6 +39,13 @@ void initializeCpu(struct s_cpu *c)
     cpu = c;
     clearFlags();
 }
+static uint16_t getBigEndianValue(uint16_t value)
+{
+
+    uint8_t highByte = value >> 8;
+    uint8_t lowByte = value & 0xff;
+    return (lowByte << 8) | highByte;
+}
 
 static int cpuExecute0(uint32_t opcode)
 {
@@ -53,9 +59,19 @@ static int cpuExecute0(uint32_t opcode)
         ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->bc);
     }
     break;
+    case 0x02000000:
+    {
+        memory_set(cpu->bc, cpu->a);
+    }
+    break;
     case 0x06000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->b);
+    }
+    break;
+    case 0x0A000000:
+    {
+        ld8BitToRegister(cpu->bc, &cpu->a);
     }
     break;
     case 0x0E000000:
@@ -86,9 +102,19 @@ static int cpuExecute1(uint32_t opcode)
         cycles = 12;
     }
     break;
+    case 0x12000000:
+    {
+        memory_set(cpu->de, cpu->a);
+    }
+    break;
     case 0x16000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->d);
+    }
+    break;
+    case 0x1A000000:
+    {
+        ld8BitToRegister(cpu->de, &cpu->a);
     }
     break;
     case 0x1E000000:
@@ -126,9 +152,21 @@ static int cpuExecute2(uint32_t opcode)
         cycles = 12;
     }
     break;
+    case 0x22000000:
+    {
+        memory_set(cpu->hl, cpu->a);
+        cpu->hl++;
+    }
+    break;
     case 0x26000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->h);
+    }
+    break;
+    case 0x2A000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
+        cpu->hl++;
     }
     break;
     case 0x2E000000:
@@ -155,14 +193,27 @@ static int cpuExecute3(uint32_t opcode)
     case 0x31000000:
     {
         ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->sp);
-        cycles = 12;
     }
     break;
     case 0x32000000:
     {
-        ld8BitToMemory(cpu->a, cpu->hl);
+        memory_set(cpu->hl, cpu->a);
         cpu->hl--;
-        cycles = 8;
+    }
+    break;
+    case 0x36000000:
+    {
+        memory_set(cpu->hl, (opcode & 0x00ff0000) >> 16);
+    }
+    break;
+    case 0x3A000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
+        cpu->hl--;
+    }
+    case 0x3E000000:
+    {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->a);
     }
     break;
     default:
@@ -217,6 +268,11 @@ static int cpuExecute4(uint32_t opcode)
         ld8BitToRegister(memory_get(cpu->hl), &cpu->b);
     }
     break;
+    case 0x47000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->b);
+    }
+    break;
     case 0x48000000:
     {
         ld8BitToRegister(cpu->b, &cpu->c);
@@ -250,6 +306,10 @@ static int cpuExecute4(uint32_t opcode)
     case 0x4E000000:
     {
         ld8BitToRegister(memory_get(cpu->hl), &cpu->c);
+    }
+    case 0x4F000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->c);
     }
     break;
     default:
@@ -304,6 +364,50 @@ static int cpuExecute5(uint32_t opcode)
         ld8BitToRegister(memory_get(cpu->hl), &cpu->d);
     }
     break;
+    case 0x57000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->d);
+    }
+    break;
+    case 0x58000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->e);
+    }
+    break;
+    case 0x59000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->e);
+    }
+    break;
+    case 0x5A000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->e);
+    }
+    break;
+    case 0x5B000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->e);
+    }
+    break;
+    case 0x5C000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->e);
+    }
+    break;
+    case 0x5D000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->e);
+    }
+    break;
+    case 0x5E000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->e);
+    }
+    case 0x5F000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->e);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -321,6 +425,86 @@ static int cpuExecute6(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x60000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->h);
+    }
+    break;
+    case 0x61000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->h);
+    }
+    break;
+    case 0x62000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->h);
+    }
+    break;
+    case 0x63000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->h);
+    }
+    break;
+    case 0x64000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->h);
+    }
+    break;
+    case 0x65000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->h);
+    }
+    break;
+    case 0x66000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->h);
+    }
+    break;
+    case 0x67000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->h);
+    }
+    break;
+    case 0x68000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->l);
+    }
+    break;
+    case 0x69000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->l);
+    }
+    break;
+    case 0x6A000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->l);
+    }
+    break;
+    case 0x6B000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->l);
+    }
+    break;
+    case 0x6C000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->l);
+    }
+    break;
+    case 0x6D000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->l);
+    }
+    break;
+    case 0x6E000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->l);
+    }
+    break;
+    case 0x6F000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->l);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -338,6 +522,41 @@ static int cpuExecute7(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x70000000:
+    {
+        memory_set(cpu->hl, cpu->b);
+    }
+    break;
+    case 0x71000000:
+    {
+        memory_set(cpu->hl, cpu->c);
+    }
+    break;
+    case 0x72000000:
+    {
+        memory_set(cpu->hl, cpu->d);
+    }
+    break;
+    case 0x73000000:
+    {
+        memory_set(cpu->hl, cpu->e);
+    }
+    break;
+    case 0x74000000:
+    {
+        memory_set(cpu->hl, cpu->h);
+    }
+    break;
+    case 0x75000000:
+    {
+        memory_set(cpu->hl, cpu->l);
+    }
+    break;
+    case 0x77000000:
+    {
+        memory_set(cpu->hl, cpu->a);
+    }
+    break;
     case 0x78000000:
     {
         ld8BitToRegister(cpu->b, &cpu->a);
@@ -551,6 +770,21 @@ static int cpuExecuteE(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xE0000000:
+    {
+        memory_set(0xFF00 + (0x00ff0000 >> 16), cpu->a);
+    }
+    break;
+    case 0xE2000000:
+    {
+        memory_set(0xFF00 + cpu->c, cpu->a);
+    }
+    break;
+    case 0xEA000000:
+    {
+        memory_set(getBigEndianValue((opcode & 0x00ffff00) >> 8), cpu->a);
+    }
+    break;
     case 0xEE000000:
     {
         cycles = 8;
@@ -574,6 +808,21 @@ static int cpuExecuteF(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xF0000000:
+    {
+        ld8BitToRegister(memory_get(0xFF00 + (0x00ff0000 >> 16)), &cpu->a);
+    }
+    break;
+    case 0xF2000000:
+    {
+        ld8BitToRegister(memory_get(0xFF00 + cpu->c), &cpu->a);
+    }
+    break;
+    case 0xFA000000:
+    {
+        ld8BitToRegister((opcode & 0x0000ff00) >> 8, &cpu->a);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -698,10 +947,6 @@ static void ld16BitToRegister(uint16_t value, uint16_t *reg)
 static void ld8BitToRegister(uint8_t value, uint8_t *reg)
 {
     *reg = value;
-}
-static void ld8BitToMemory(uint8_t value, uint16_t index)
-{
-    memory_set(index, value);
 }
 
 static void XOR(uint8_t value)
