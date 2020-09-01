@@ -10,7 +10,9 @@ static struct s_cpu *cpu;
 
 static void ld8BitToRegister(uint8_t value, uint8_t *reg);
 static void ld16BitToRegister(uint16_t value, uint16_t *reg);
+static void push(uint16_t value);
 static void XOR(uint8_t value);
+static void inc(uint8_t *reg);
 
 const uint8_t instructionSize[256] = {
     1, 3, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, 2, 1,
@@ -65,6 +67,16 @@ static int cpuExecute0(uint32_t opcode)
         memory_set(cpu->bc, cpu->a);
     }
     break;
+    case 0x03000000:
+    {
+        cpu->bc += 1;
+    }
+    break;
+    case 0x04000000:
+    {
+        inc(&cpu->b);
+    }
+    break;
     case 0x06000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->b);
@@ -81,6 +93,11 @@ static int cpuExecute0(uint32_t opcode)
     case 0x0A000000:
     {
         ld8BitToRegister(cpu->bc, &cpu->a);
+    }
+    break;
+    case 0x0C000000:
+    {
+        inc(&cpu->c);
     }
     break;
     case 0x0E000000:
@@ -116,6 +133,16 @@ static int cpuExecute1(uint32_t opcode)
         memory_set(cpu->de, cpu->a);
     }
     break;
+    case 0x13000000:
+    {
+        cpu->de += 1;
+    }
+    break;
+    case 0x14000000:
+    {
+        inc(&cpu->d);
+    }
+    break;
     case 0x16000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->d);
@@ -131,6 +158,11 @@ static int cpuExecute1(uint32_t opcode)
     case 0x1A000000:
     {
         ld8BitToRegister(cpu->de, &cpu->a);
+    }
+    break;
+    case 0x1C000000:
+    {
+        inc(&cpu->e);
     }
     break;
     case 0x1E000000:
@@ -176,6 +208,16 @@ static int cpuExecute2(uint32_t opcode)
         cpu->hl++;
     }
     break;
+    case 0x23000000:
+    {
+        cpu->hl += 1;
+    }
+    break;
+    case 0x24000000:
+    {
+        inc(&cpu->h);
+    }
+    break;
     case 0x26000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->h);
@@ -194,6 +236,11 @@ static int cpuExecute2(uint32_t opcode)
     {
         ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
         cpu->hl++;
+    }
+    break;
+    case 0x0c000000:
+    {
+        inc(&cpu->l);
     }
     break;
     case 0x2E000000:
@@ -238,6 +285,28 @@ static int cpuExecute3(uint32_t opcode)
         cpu->hl--;
     }
     break;
+    case 0x03000000:
+    {
+        cpu->sp += 1;
+    }
+    break;
+    case 0x34000000:
+    {
+        uint8_t val = memory_get(cpu->hl);
+
+        if ((val & 0x0f) + 1 > 0x0f)
+        {
+            setFlag(FLAGS_HALFCARRY);
+        }
+        val += 1;
+        memory_set(cpu->hl, val);
+        if (val == 0)
+        {
+            setFlag(FLAGS_ZERO);
+        }
+        resetFlag(FLAGS_NEGATIVE);
+    }
+    break;
     case 0x36000000:
     {
         memory_set(cpu->hl, (opcode & 0x00ff0000) >> 16);
@@ -257,6 +326,12 @@ static int cpuExecute3(uint32_t opcode)
         ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
         cpu->hl--;
     }
+    break;
+    case 0x3C000000:
+    {
+        inc(&cpu->a);
+    }
+    break;
     case 0x3E000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->a);
@@ -801,12 +876,21 @@ static int cpuExecuteC(uint32_t opcode)
         cpu->pc = getBigEndianValue(imm);
     }
     break;
+    case 0xC4000000:
+    {
+        if (!isFlagSet(FLAGS_ZERO))
+        {
+            push(cpu->pc);
+            uint16_t imm = (opcode & 0x00ffff00) >> 8;
+            cpu->pc = getBigEndianValue(imm);
+        }
+    }
+    break;
     case 0xC5000000:
     {
-        memory_set(cpu->sp, (cpu->bc & 0xff00) >> 8);
-        memory_set(cpu->sp - 1, cpu->bc & 0xff);
-
-        cpu->sp -= 2;
+        push(cpu->pc);
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        cpu->pc = getBigEndianValue(imm);
     }
     break;
 
@@ -823,6 +907,21 @@ static int cpuExecuteC(uint32_t opcode)
     {
 
         cpuExecuteCB(cpu, opcode);
+    }
+    break;
+    case 0xCC000000:
+    {
+        if (isFlagSet(FLAGS_ZERO))
+        {
+            push(cpu->pc);
+            uint16_t imm = (opcode & 0x00ffff00) >> 8;
+            cpu->pc = getBigEndianValue(imm);
+        }
+    }
+    break;
+    case 0xCD000000:
+    {
+        push(cpu->pc);
     }
     break;
     default:
@@ -861,12 +960,19 @@ static int cpuExecuteD(uint32_t opcode)
         }
     }
     break;
+    case 0xD4000000:
+    {
+        if (!isFlagSet(FLAGS_CARRY))
+        {
+            push(cpu->pc);
+            uint16_t imm = (opcode & 0x00ffff00) >> 8;
+            cpu->pc = getBigEndianValue(imm);
+        }
+    }
+    break;
     case 0xD5000000:
     {
-        memory_set(cpu->sp, (cpu->de & 0xff00) >> 8);
-        memory_set(cpu->sp - 1, cpu->de & 0xff);
-
-        cpu->sp -= 2;
+        push(cpu->de);
     }
     break;
     case 0xDA000000:
@@ -874,6 +980,16 @@ static int cpuExecuteD(uint32_t opcode)
         uint16_t imm = (opcode & 0x00ffff00) >> 8;
         if (isFlagSet(FLAGS_CARRY))
         {
+            cpu->pc = getBigEndianValue(imm);
+        }
+    }
+    break;
+    case 0xDC000000:
+    {
+        if (isFlagSet(FLAGS_CARRY))
+        {
+            push(cpu->pc);
+            uint16_t imm = (opcode & 0x00ffff00) >> 8;
             cpu->pc = getBigEndianValue(imm);
         }
     }
@@ -917,10 +1033,7 @@ static int cpuExecuteE(uint32_t opcode)
     break;
     case 0xE5000000:
     {
-        memory_set(cpu->sp, (cpu->hl & 0xff00) >> 8);
-        memory_set(cpu->sp - 1, cpu->hl & 0xff);
-
-        cpu->sp -= 2;
+        push(cpu->hl);
     }
     break;
     case 0xE9000000:
@@ -978,10 +1091,7 @@ static int cpuExecuteF(uint32_t opcode)
     break;
     case 0xF5000000:
     {
-        memory_set(cpu->sp, (cpu->af & 0xff00) >> 8);
-        memory_set(cpu->sp - 1, cpu->af & 0xff);
-
-        cpu->sp -= 2;
+        push(cpu->af);
     }
     break;
     case 0xF8000000:
@@ -1158,4 +1268,23 @@ static void XOR(uint8_t value)
     }
 
     resetFlag(FLAGS_CARRY | FLAGS_HALFCARRY | FLAGS_NEGATIVE);
+}
+static void push(uint16_t value)
+{
+    memory_set(cpu->sp, (value & 0xff00) >> 8);
+    memory_set(cpu->sp - 1, value & 0xff);
+    cpu->sp -= 2;
+}
+static void inc(uint8_t *reg)
+{
+    if ((*reg & 0x0f) + 1 > 0x0f)
+    {
+        setFlag(FLAGS_HALFCARRY);
+    }
+    *reg += 1;
+    if (*reg == 0)
+    {
+        setFlag(FLAGS_ZERO);
+    }
+    resetFlag(FLAGS_NEGATIVE);
 }
