@@ -182,6 +182,76 @@ static int cpuExecute4(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x40000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->b);
+    }
+    break;
+    case 0x41000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->b);
+    }
+    break;
+    case 0x42000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->b);
+    }
+    break;
+    case 0x43000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->b);
+    }
+    break;
+    case 0x44000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->b);
+    }
+    break;
+    case 0x45000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->b);
+    }
+    break;
+    case 0x46000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->b);
+    }
+    break;
+    case 0x48000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->c);
+    }
+    break;
+    case 0x49000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->c);
+    }
+    break;
+    case 0x4A000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->c);
+    }
+    break;
+    case 0x4B000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->c);
+    }
+    break;
+    case 0x4C000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->c);
+    }
+    break;
+    case 0x4D000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->c);
+    }
+    break;
+    case 0x4E000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->c);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -199,6 +269,41 @@ static int cpuExecute5(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x50000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->d);
+    }
+    break;
+    case 0x51000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->d);
+    }
+    break;
+    case 0x52000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->d);
+    }
+    break;
+    case 0x53000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->d);
+    }
+    break;
+    case 0x54000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->d);
+    }
+    break;
+    case 0x55000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->d);
+    }
+    break;
+    case 0x56000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->d);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -233,6 +338,46 @@ static int cpuExecute7(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x78000000:
+    {
+        ld8BitToRegister(cpu->b, &cpu->a);
+    }
+    break;
+    case 0x79000000:
+    {
+        ld8BitToRegister(cpu->c, &cpu->a);
+    }
+    break;
+    case 0x7A000000:
+    {
+        ld8BitToRegister(cpu->d, &cpu->a);
+    }
+    break;
+    case 0x7B000000:
+    {
+        ld8BitToRegister(cpu->e, &cpu->a);
+    }
+    break;
+    case 0x7C000000:
+    {
+        ld8BitToRegister(cpu->h, &cpu->a);
+    }
+    break;
+    case 0x7D000000:
+    {
+        ld8BitToRegister(cpu->l, &cpu->a);
+    }
+    break;
+    case 0x7E000000:
+    {
+        ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
+    }
+    break;
+    case 0x7F000000:
+    {
+        ld8BitToRegister(cpu->a, &cpu->a);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
