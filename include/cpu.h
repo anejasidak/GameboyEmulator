@@ -64,4 +64,6 @@ uint8_t getInstructionSize(uint8_t index);
 void setFlag(uint8_t flag);
 void resetFlag(uint8_t flag);
 void clearFlags();
+
+_Bool isFlagSet(uint8_t flag);
 #endif

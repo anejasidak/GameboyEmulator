@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
     loadGameIntoMemory();
 
-    test_allTests(gameboy);
+    //test_allTests(gameboy);
 
     bool isActive = true;
 

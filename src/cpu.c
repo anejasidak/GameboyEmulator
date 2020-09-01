@@ -121,6 +121,13 @@ static int cpuExecute1(uint32_t opcode)
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->d);
     }
     break;
+    case 0x18000000:
+    {
+        uint8_t imm = (opcode & 0x00ff0000) >> 16;
+
+        cpu->pc += imm;
+    }
+    break;
     case 0x1A000000:
     {
         ld8BitToRegister(cpu->de, &cpu->a);
@@ -148,13 +155,15 @@ static int cpuExecute2(uint32_t opcode)
 
     switch (instructionCode)
     {
-    /*
     case 0x20000000:
     {
-        
+        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        if (!isFlagSet(FLAGS_ZERO))
+        {
+            cpu->pc += imm;
+        }
     }
     break;
-    */
     case 0x21000000:
     {
         uint16_t imm = (opcode & 0x00ffff00) >> 8;
@@ -170,6 +179,15 @@ static int cpuExecute2(uint32_t opcode)
     case 0x26000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->h);
+    }
+    break;
+    case 0x28000000:
+    {
+        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        if (isFlagSet(FLAGS_ZERO))
+        {
+            cpu->pc += imm;
+        }
     }
     break;
     case 0x2A000000:
@@ -199,6 +217,15 @@ static int cpuExecute3(uint32_t opcode)
     int instructionCode = opcode & 0xff000000;
     switch (instructionCode)
     {
+    case 0x30000000:
+    {
+        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        if (!isFlagSet(FLAGS_CARRY))
+        {
+            cpu->pc += imm;
+        }
+    }
+    break;
     case 0x31000000:
     {
         uint16_t imm = (opcode & 0x00ffff00) >> 8;
@@ -214,6 +241,15 @@ static int cpuExecute3(uint32_t opcode)
     case 0x36000000:
     {
         memory_set(cpu->hl, (opcode & 0x00ff0000) >> 16);
+    }
+    break;
+    case 0x38000000:
+    {
+        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        if (isFlagSet(FLAGS_CARRY))
+        {
+            cpu->pc += imm;
+        }
     }
     break;
     case 0x3A000000:
@@ -750,12 +786,37 @@ static int cpuExecuteC(uint32_t opcode)
         cpu->sp += 2;
     }
     break;
+    case 0xC2000000:
+    {
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        if (!isFlagSet(FLAGS_ZERO))
+        {
+            cpu->pc = getBigEndianValue(imm);
+        }
+    }
+    break;
+    case 0xC3000000:
+    {
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        cpu->pc = getBigEndianValue(imm);
+    }
+    break;
     case 0xC5000000:
     {
         memory_set(cpu->sp, (cpu->bc & 0xff00) >> 8);
         memory_set(cpu->sp - 1, cpu->bc & 0xff);
 
         cpu->sp -= 2;
+    }
+    break;
+
+    case 0xCA000000:
+    {
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        if (isFlagSet(FLAGS_ZERO))
+        {
+            cpu->pc = getBigEndianValue(imm);
+        }
     }
     break;
     case 0xCB000000:
@@ -791,12 +852,30 @@ static int cpuExecuteD(uint32_t opcode)
         cpu->sp += 2;
     }
     break;
+    case 0xD2000000:
+    {
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        if (!isFlagSet(FLAGS_CARRY))
+        {
+            cpu->pc = getBigEndianValue(imm);
+        }
+    }
+    break;
     case 0xD5000000:
     {
         memory_set(cpu->sp, (cpu->de & 0xff00) >> 8);
         memory_set(cpu->sp - 1, cpu->de & 0xff);
 
         cpu->sp -= 2;
+    }
+    break;
+    case 0xDA000000:
+    {
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        if (isFlagSet(FLAGS_CARRY))
+        {
+            cpu->pc = getBigEndianValue(imm);
+        }
     }
     break;
     default:
@@ -842,6 +921,11 @@ static int cpuExecuteE(uint32_t opcode)
         memory_set(cpu->sp - 1, cpu->hl & 0xff);
 
         cpu->sp -= 2;
+    }
+    break;
+    case 0xE9000000:
+    {
+        cpu->pc = cpu->hl;
     }
     break;
     case 0xEA000000:
@@ -1050,6 +1134,10 @@ void clearFlags()
     cpu->f = 0;
 }
 
+_Bool isFlagSet(uint8_t flag)
+{
+    return cpu->f & flag ? 1 : 0;
+}
 static void ld16BitToRegister(uint16_t value, uint16_t *reg)
 {
     *reg = value;
