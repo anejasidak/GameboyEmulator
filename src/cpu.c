@@ -10,6 +10,8 @@ static struct s_cpu *cpu;
 
 static void ld8BitToRegister(uint8_t value, uint8_t *reg);
 static void ld16BitToRegister(uint16_t value, uint16_t *reg);
+static uint16_t get16BitFromOpcode(uint32_t opcode);
+
 static void push(uint16_t value);
 static void XOR(uint8_t value);
 static void inc(uint8_t *reg);
@@ -283,8 +285,11 @@ static int cpuExecute3(uint32_t opcode)
     break;
     case 0x32000000:
     {
+        printf("putting value %0x from register A at address %0x. (hl)\n",
+               cpu->a, cpu->hl);
         memory_set(cpu->hl, cpu->a);
         cpu->hl--;
+        printf("hl now is:  %0x and value at address (hl + 1) is %0x\n", cpu->hl, memory_get(cpu->hl + 1));
     }
     break;
     case 0x03000000:
@@ -325,6 +330,8 @@ static int cpuExecute3(uint32_t opcode)
     break;
     case 0x3A000000:
     {
+        printf("Bringing value %0x at address %0x to register A\n",
+               memory_get(cpu->hl), cpu->hl);
         ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
         cpu->hl--;
     }
@@ -677,6 +684,8 @@ static int cpuExecute7(uint32_t opcode)
     break;
     case 0x77000000:
     {
+        printf("putting value %0x from register A at address %0x. (hl)\n",
+               cpu->a, cpu->hl);
         memory_set(cpu->hl, cpu->a);
     }
     break;
@@ -907,17 +916,15 @@ static int cpuExecuteC(uint32_t opcode)
     break;
     case 0xC2000000:
     {
-        uint16_t imm = (opcode & 0x00ffff00) >> 8;
         if (!isFlagSet(FLAGS_ZERO))
         {
-            cpu->pc = getBigEndianValue(imm);
+            cpu->pc = getBigEndianValue(get16BitFromOpcode(opcode));
         }
     }
     break;
     case 0xC3000000:
     {
-        uint16_t imm = (opcode & 0x00ffff00) >> 8;
-        cpu->pc = getBigEndianValue(imm);
+        cpu->pc = getBigEndianValue(get16BitFromOpcode(opcode));
     }
     break;
     case 0xC4000000:
@@ -925,25 +932,21 @@ static int cpuExecuteC(uint32_t opcode)
         if (!isFlagSet(FLAGS_ZERO))
         {
             push(cpu->pc);
-            uint16_t imm = (opcode & 0x00ffff00) >> 8;
-            cpu->pc = getBigEndianValue(imm);
+            cpu->pc = getBigEndianValue(get16BitFromOpcode(opcode));
         }
     }
     break;
     case 0xC5000000:
     {
-        push(cpu->pc);
-        uint16_t imm = (opcode & 0x00ffff00) >> 8;
-        cpu->pc = getBigEndianValue(imm);
+        push(cpu->bc);
     }
     break;
 
     case 0xCA000000:
     {
-        uint16_t imm = (opcode & 0x00ffff00) >> 8;
         if (isFlagSet(FLAGS_ZERO))
         {
-            cpu->pc = getBigEndianValue(imm);
+            cpu->pc = getBigEndianValue(get16BitFromOpcode(opcode));
         }
     }
     break;
@@ -958,14 +961,14 @@ static int cpuExecuteC(uint32_t opcode)
         if (isFlagSet(FLAGS_ZERO))
         {
             push(cpu->pc);
-            uint16_t imm = (opcode & 0x00ffff00) >> 8;
-            cpu->pc = getBigEndianValue(imm);
+            cpu->pc = getBigEndianValue(get16BitFromOpcode(opcode));
         }
     }
     break;
     case 0xCD000000:
     {
         push(cpu->pc);
+        cpu->pc = getBigEndianValue(get16BitFromOpcode(opcode));
     }
     break;
     default:
@@ -1057,7 +1060,10 @@ static int cpuExecuteE(uint32_t opcode)
     {
     case 0xE0000000:
     {
-        memory_set(0xFF00 + (0x00ff0000 >> 16), cpu->a);
+        uint8_t imm = (opcode & 0x00ff0000) >> 16;
+        printf("putting value %0x from register A at address %0x. (0xFF00 + %0x)\n",
+               cpu->a, 0xff00 + imm, imm);
+        memory_set(0xFF00 + imm, cpu->a);
     }
     break;
     case 0xE1000000:
@@ -1072,6 +1078,8 @@ static int cpuExecuteE(uint32_t opcode)
     break;
     case 0xE2000000:
     {
+        printf("putting value %0x from register A at address %0x. (FF + cpu->c)\n",
+               cpu->a, 0xff00 + cpu->c);
         memory_set(0xFF00 + cpu->c, cpu->a);
     }
     break;
@@ -1373,4 +1381,9 @@ static void cp(uint8_t value)
         resetFlag(FLAGS_HALFCARRY);
     }
     setFlag(FLAGS_NEGATIVE);
+}
+
+static uint16_t get16BitFromOpcode(uint32_t opcode)
+{
+    return (opcode & 0x00ffff00) >> 8;
 }
