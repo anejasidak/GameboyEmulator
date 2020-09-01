@@ -51,11 +51,16 @@ static int cpuExecute0(uint32_t opcode)
     case 0x01000000:
     {
         ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->bc);
-        cycles = 12;
     }
     break;
     case 0x06000000:
     {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->b);
+    }
+    break;
+    case 0x0E000000:
+    {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->c);
     }
     break;
     default:
@@ -81,6 +86,16 @@ static int cpuExecute1(uint32_t opcode)
         cycles = 12;
     }
     break;
+    case 0x16000000:
+    {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->d);
+    }
+    break;
+    case 0x1E000000:
+    {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->e);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -98,10 +113,27 @@ static int cpuExecute2(uint32_t opcode)
 
     switch (instructionCode)
     {
+    /*
+    case 0x20000000:
+    {
+        
+    }
+    break;
+    */
     case 0x21000000:
     {
         ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->hl);
         cycles = 12;
+    }
+    break;
+    case 0x26000000:
+    {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->h);
+    }
+    break;
+    case 0x2E000000:
+    {
+        ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->l);
     }
     break;
     default:
