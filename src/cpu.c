@@ -190,10 +190,10 @@ static int cpuExecute2(uint32_t opcode)
     {
     case 0x20000000:
     {
-        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        signed char imm = (opcode & 0x00ff0000) >> 16;
         if (!isFlagSet(FLAGS_ZERO))
         {
-            printf("Flag is not zero, jumping\n");
+            printf("0x20 Flag is not zero, jumping\n");
             cpu->pc += imm;
         }
     }
@@ -227,7 +227,7 @@ static int cpuExecute2(uint32_t opcode)
     break;
     case 0x28000000:
     {
-        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        signed char imm = (opcode & 0x00ff0000) >> 16;
         if (isFlagSet(FLAGS_ZERO))
         {
             cpu->pc += imm;
@@ -240,7 +240,7 @@ static int cpuExecute2(uint32_t opcode)
         cpu->hl++;
     }
     break;
-    case 0x0c000000:
+    case 0x2c000000:
     {
         inc(&cpu->l);
     }
@@ -268,7 +268,7 @@ static int cpuExecute3(uint32_t opcode)
     {
     case 0x30000000:
     {
-        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        signed char imm = (opcode & 0x00ff0000) >> 16;
         if (!isFlagSet(FLAGS_CARRY))
         {
             cpu->pc += imm;
@@ -316,7 +316,7 @@ static int cpuExecute3(uint32_t opcode)
     break;
     case 0x38000000:
     {
-        uint16_t imm = (opcode & 0x00ff0000) >> 16;
+        signed char imm = (opcode & 0x00ff0000) >> 16;
         if (isFlagSet(FLAGS_CARRY))
         {
             cpu->pc += imm;

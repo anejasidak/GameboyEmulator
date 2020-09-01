@@ -47,6 +47,11 @@ void executeNextInstruction()
 
     int x = opcode >> (8 * (4 - getInstructionSize(opcode >> 24)));
     printf("Executing %8x instruction\n", x);
-    printf("Pc is: %0x\n", gameboy->cpu.pc);
+
     cpuExecuteInstruction(opcode);
+    printf("A: %0x \tB: %0x \tC: %0x \tD: %0x \tE: %0x \tH: %0x \tL: %0x \tSP: %0x\n",
+           gameboy->cpu.a, gameboy->cpu.b, gameboy->cpu.c, gameboy->cpu.d, gameboy->cpu.e, gameboy->cpu.h,
+           gameboy->cpu.l, gameboy->cpu.sp);
+    printf("\tF: %0x\n", gameboy->cpu.f);
+    printf("Pc is: %0x\n", gameboy->cpu.pc);
 }
