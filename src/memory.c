@@ -54,7 +54,6 @@ uint32_t memory_get_ins(int index)
     {
         opcode = opcode << 8;
         opcode |= memory->memoryArray[i];
-        printf("i = %d and opcode is: %08x\n", i, opcode);
     }
     return opcode;
 }

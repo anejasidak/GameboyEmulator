@@ -10,12 +10,13 @@ static struct s_cpu *cpu;
 static void setFlag(uint8_t flag);
 static void resetFlag(uint8_t flag);
 static void clearFlags();
-static void load16BitRegister(uint16_t value, uint16_t *reg);
+static void ld16Bit(uint16_t value, uint16_t *reg);
 static void XOR(uint8_t value);
 
 void initializeCpu(struct s_cpu *c)
 {
     cpu = c;
+    clearFlags();
 }
 
 static int cpuExecute0(uint32_t opcode)
@@ -25,6 +26,13 @@ static int cpuExecute0(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x01000000:
+    {
+        cpu->pc += 3;
+        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->bc);
+        cycles = 12;
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -42,6 +50,13 @@ static int cpuExecute1(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x11000000:
+    {
+        cpu->pc += 3;
+        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->de);
+        cycles = 12;
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -59,6 +74,13 @@ static int cpuExecute2(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0x21000000:
+    {
+        cpu->pc += 3;
+        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->hl);
+        cycles = 12;
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -78,8 +100,7 @@ static int cpuExecute3(uint32_t opcode)
     case 0x31000000:
     {
         cpu->pc += 3;
-        opcode = (opcode & 0x00ffff00) >> 8;
-        load16BitRegister(opcode, &cpu->sp);
+        ld16Bit((opcode & 0x00ffff00) >> 8, &cpu->sp);
         cycles = 12;
     }
     break;
@@ -463,8 +484,9 @@ static void clearFlags()
     cpu->f = 0;
 }
 
-static void load16BitRegister(uint16_t value, uint16_t *reg)
+static void ld16Bit(uint16_t value, uint16_t *reg)
 {
+
     uint8_t highByte = value >> 8;
     uint8_t lowByte = value & 0xff;
     *reg = (lowByte << 8) | highByte;
