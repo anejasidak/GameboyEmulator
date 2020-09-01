@@ -13,6 +13,7 @@ static void ld16BitToRegister(uint16_t value, uint16_t *reg);
 static void push(uint16_t value);
 static void XOR(uint8_t value);
 static void inc(uint8_t *reg);
+static void cp(uint8_t value);
 
 const uint8_t instructionSize[256] = {
     1, 3, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, 2, 1,
@@ -192,6 +193,7 @@ static int cpuExecute2(uint32_t opcode)
         uint16_t imm = (opcode & 0x00ff0000) >> 16;
         if (!isFlagSet(FLAGS_ZERO))
         {
+            printf("Flag is not zero, jumping\n");
             cpu->pc += imm;
         }
     }
@@ -834,6 +836,48 @@ static int cpuExecuteB(uint32_t opcode)
 
     switch (instructionCode)
     {
+
+    case 0xB8000000:
+    {
+        cp(cpu->b);
+    }
+    break;
+    case 0xB9000000:
+    {
+        cp(cpu->c);
+    }
+    break;
+
+    case 0xBA000000:
+    {
+        cp(cpu->d);
+    }
+    break;
+    case 0xBB000000:
+    {
+        cp(cpu->e);
+    }
+    break;
+    case 0xBC000000:
+    {
+        cp(cpu->h);
+    }
+    break;
+    case 0xBD000000:
+    {
+        cp(cpu->l);
+    }
+    break;
+    case 0xBE000000:
+    {
+        cp(memory_get(cpu->hl));
+    }
+    break;
+    case 0xBF000000:
+    {
+        cp(cpu->a);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -1131,6 +1175,11 @@ static int cpuExecuteF(uint32_t opcode)
         ld8BitToRegister((opcode & 0x0000ff00) >> 8, &cpu->a);
     }
     break;
+    case 0xFE000000:
+    {
+        cp((opcode & 0x00ff0000) >> 16);
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -1281,10 +1330,46 @@ static void inc(uint8_t *reg)
     {
         setFlag(FLAGS_HALFCARRY);
     }
+    else
+    {
+        resetFlag(FLAGS_HALFCARRY);
+    }
     *reg += 1;
     if (*reg == 0)
     {
         setFlag(FLAGS_ZERO);
     }
+    else
+    {
+        resetFlag(FLAGS_ZERO);
+    }
     resetFlag(FLAGS_NEGATIVE);
+}
+static void cp(uint8_t value)
+{
+    if (cpu->a == value)
+    {
+        setFlag(FLAGS_ZERO);
+    }
+    else
+    {
+        resetFlag(FLAGS_ZERO);
+    }
+    if (cpu->a < value)
+    {
+        setFlag(FLAGS_CARRY);
+    }
+    else
+    {
+        resetFlag(FLAGS_CARRY);
+    }
+    if ((cpu->a & 0x0f) < (value & 0x0f))
+    {
+        setFlag(FLAGS_HALFCARRY);
+    }
+    else
+    {
+        resetFlag(FLAGS_HALFCARRY);
+    }
+    setFlag(FLAGS_NEGATIVE);
 }
