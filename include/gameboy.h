@@ -13,7 +13,7 @@ struct s_gameboy
     struct s_memory memory;
 };
 
-struct s_gameboy* intializeSystem();
+void intializeSystem(struct s_gameboy* gb);
 
 _Bool readCartridge(const char* filename);
 

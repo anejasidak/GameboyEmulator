@@ -2,6 +2,8 @@
 #include "memory.h"
 
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
 #include "config.h"
 
 static struct s_memory *memory;
@@ -45,10 +47,14 @@ uint8_t memory_get(int index)
     return memory->memoryArray[index];
 }
 
-uint16_t memory_get_ins(int index)
+uint32_t memory_get_ins(int index)
 {
-    uint8_t byte1 = memory_get(index);
-    uint8_t byte2 = memory_get(index + 1);
-
-    return byte1 << 8 | byte2;
+    uint32_t opcode = 0;
+    for (int i = index; i < MEMORY_SIZE && i - index < 4; i++)
+    {
+        opcode = opcode << 8;
+        opcode |= memory->memoryArray[i];
+        printf("i = %d and opcode is: %08x\n", i, opcode);
+    }
+    return opcode;
 }

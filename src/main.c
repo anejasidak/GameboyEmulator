@@ -50,9 +50,10 @@ int main(int argc, char **argv)
         printf("Please provide a file to load\n");
         return -1;
     }
-    struct s_gameboy *gameboy = intializeSystem();
+    struct s_gameboy *gameboy = (struct s_gameboy *)malloc(sizeof(struct s_gameboy));
+    intializeSystem(gameboy);
 
-    if (!initializeView() || !readCartridge(argv[1]))
+    if (/*!initializeView() || */ !readCartridge(argv[1]))
     {
         return -1;
     }
@@ -60,8 +61,9 @@ int main(int argc, char **argv)
     loadGameIntoMemory();
 
     test_printRomBanks(gameboy, 0);
-    
+
     bool isActive = true;
+
     while (isActive)
     {
         SDL_Event event;
@@ -81,16 +83,18 @@ int main(int argc, char **argv)
         {
             break;
         }
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-        
+        // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        // SDL_RenderClear(renderer);
+        // SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+
         executeNextInstruction();
     }
 
     // Close the window and quit SDL to  clean up all initialized subsystems.
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    // SDL_DestroyWindow(window);
+    // SDL_DestroyRenderer(renderer);
+    // SDL_Quit();
 
+    free(gameboy);
     return 0;
 }

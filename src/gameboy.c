@@ -6,15 +6,14 @@
 
 static struct s_gameboy *gameboy;
 
-struct s_gameboy *intializeSystem()
+void intializeSystem(struct s_gameboy* gb)
 {
-    struct s_gameboy gb;
-    memset(&gb, 0, sizeof(struct s_gameboy));
+    memset(gb, 0, sizeof(struct s_gameboy));
 
-    intializeMemory(&gb.memory);
+    intializeMemory(&gb->memory);
+    initializeCpu(&gb->cpu);
 
-    gameboy = &gb;
-    return gameboy;
+    gameboy = gb;
 }
 
 _Bool readCartridge(const char *filename)
@@ -43,7 +42,7 @@ void loadGameIntoMemory()
 
 void executeNextInstruction()
 {
-    uint16_t opcode = memory_get_ins(gameboy->cpu.pc);
-    gameboy->cpu.pc = gameboy->cpu.pc + 2;
+    uint32_t opcode = memory_get_ins(gameboy->cpu.pc);
+    printf("Executing %08x instruction\n", opcode);
     cpuExecuteInstruction(opcode);
 }

@@ -15,5 +15,5 @@ void memory_set(int index, uint8_t value);
 
 uint8_t memory_get(int index);
 
-uint16_t memory_get_ins(int index);
+uint32_t memory_get_ins(int index);
 #endif

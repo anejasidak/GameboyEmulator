@@ -31,4 +31,10 @@
 #define RESTRICTED_RAM_START 0xFEA0
 #define RESTRICTED_RAM_END 0xFEFF
 
+// Cpu information
+#define FLAGS_ZERO (1 << 7)
+#define FLAGS_NEGATIVE (1 << 6)
+#define FLAGS_HALFCARRY (1 << 5)
+#define FLAGS_CARRY (1 << 4)
+
 #endif

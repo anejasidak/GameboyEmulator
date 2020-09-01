@@ -57,6 +57,7 @@ struct s_cpu
     uint16_t pc;
 };
 
-int cpuExecuteInstruction(uint16_t opcode);
+void initializeCpu(struct s_cpu* c);
+int cpuExecuteInstruction(uint32_t opcode);
 
 #endif
