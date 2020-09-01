@@ -56,7 +56,8 @@ static int cpuExecute0(uint32_t opcode)
     {
     case 0x01000000:
     {
-        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->bc);
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        ld16BitToRegister(getBigEndianValue(imm), &cpu->bc);
     }
     break;
     case 0x02000000:
@@ -67,6 +68,14 @@ static int cpuExecute0(uint32_t opcode)
     case 0x06000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->b);
+    }
+    break;
+    case 0x08000000:
+    {
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        imm = getBigEndianValue(imm);
+        memory_set(imm, (cpu->sp & 0xff00) >> 8);
+        memory_set(imm + 1, cpu->sp & 0xff);
     }
     break;
     case 0x0A000000:
@@ -98,8 +107,8 @@ static int cpuExecute1(uint32_t opcode)
     {
     case 0x11000000:
     {
-        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->de);
-        cycles = 12;
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        ld16BitToRegister(getBigEndianValue(imm), &cpu->de);
     }
     break;
     case 0x12000000:
@@ -148,8 +157,8 @@ static int cpuExecute2(uint32_t opcode)
     */
     case 0x21000000:
     {
-        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->hl);
-        cycles = 12;
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        ld16BitToRegister(getBigEndianValue(imm), &cpu->hl);
     }
     break;
     case 0x22000000:
@@ -192,7 +201,8 @@ static int cpuExecute3(uint32_t opcode)
     {
     case 0x31000000:
     {
-        ld16BitToRegister((opcode & 0x00ffff00) >> 8, &cpu->sp);
+        uint16_t imm = (opcode & 0x00ffff00) >> 8;
+        ld16BitToRegister(getBigEndianValue(imm), &cpu->sp);
     }
     break;
     case 0x32000000:
@@ -730,6 +740,24 @@ static int cpuExecuteC(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xC1000000:
+    {
+        uint8_t low = memory_get(cpu->sp + 1);
+        uint8_t high = memory_get(cpu->sp + 2);
+
+        uint16_t result = (high << 8) | low;
+        ld16BitToRegister(result, &cpu->bc);
+        cpu->sp += 2;
+    }
+    break;
+    case 0xC5000000:
+    {
+        memory_set(cpu->sp, (cpu->bc & 0xff00) >> 8);
+        memory_set(cpu->sp - 1, cpu->bc & 0xff);
+
+        cpu->sp -= 2;
+    }
+    break;
     case 0xCB000000:
     {
 
@@ -753,6 +781,24 @@ static int cpuExecuteD(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xD1000000:
+    {
+        uint8_t low = memory_get(cpu->sp + 1);
+        uint8_t high = memory_get(cpu->sp + 2);
+
+        uint16_t result = (high << 8) | low;
+        ld16BitToRegister(result, &cpu->de);
+        cpu->sp += 2;
+    }
+    break;
+    case 0xD5000000:
+    {
+        memory_set(cpu->sp, (cpu->de & 0xff00) >> 8);
+        memory_set(cpu->sp - 1, cpu->de & 0xff);
+
+        cpu->sp -= 2;
+    }
+    break;
     default:
     {
         printf("Instruction %0x has not been implemented\n", opcode & 0xfff);
@@ -775,9 +821,27 @@ static int cpuExecuteE(uint32_t opcode)
         memory_set(0xFF00 + (0x00ff0000 >> 16), cpu->a);
     }
     break;
+    case 0xE1000000:
+    {
+        uint8_t low = memory_get(cpu->sp + 1);
+        uint8_t high = memory_get(cpu->sp + 2);
+
+        uint16_t result = (high << 8) | low;
+        ld16BitToRegister(result, &cpu->hl);
+        cpu->sp += 2;
+    }
+    break;
     case 0xE2000000:
     {
         memory_set(0xFF00 + cpu->c, cpu->a);
+    }
+    break;
+    case 0xE5000000:
+    {
+        memory_set(cpu->sp, (cpu->hl & 0xff00) >> 8);
+        memory_set(cpu->sp - 1, cpu->hl & 0xff);
+
+        cpu->sp -= 2;
     }
     break;
     case 0xEA000000:
@@ -813,9 +877,59 @@ static int cpuExecuteF(uint32_t opcode)
         ld8BitToRegister(memory_get(0xFF00 + (0x00ff0000 >> 16)), &cpu->a);
     }
     break;
+    case 0xF1000000:
+    {
+        uint8_t low = memory_get(cpu->sp + 1);
+        uint8_t high = memory_get(cpu->sp + 2);
+
+        uint16_t result = (high << 8) | low;
+        ld16BitToRegister(result, &cpu->af);
+        cpu->sp += 2;
+    }
+    break;
     case 0xF2000000:
     {
         ld8BitToRegister(memory_get(0xFF00 + cpu->c), &cpu->a);
+    }
+    break;
+    case 0xF5000000:
+    {
+        memory_set(cpu->sp, (cpu->af & 0xff00) >> 8);
+        memory_set(cpu->sp - 1, cpu->af & 0xff);
+
+        cpu->sp -= 2;
+    }
+    break;
+    case 0xF8000000:
+    {
+        signed char operand = (opcode & 0x00ff0000) >> 16;
+        if ((cpu->sp & 0x0f) + (operand & 0x0f) > 0x0f)
+        {
+            setFlag(FLAGS_HALFCARRY);
+        }
+        else
+        {
+            resetFlag(FLAGS_HALFCARRY);
+        }
+
+        uint32_t result = cpu->sp + operand;
+        if (result & 0xffff0000)
+        {
+            setFlag(FLAGS_CARRY);
+        }
+        else
+        {
+            resetFlag(FLAGS_CARRY);
+        }
+
+        resetFlag(FLAGS_ZERO | FLAGS_NEGATIVE);
+
+        ld16BitToRegister(result & 0xffff, &cpu->hl);
+    }
+    break;
+    case 0xF9000000:
+    {
+        ld16BitToRegister(cpu->hl, &cpu->sp);
     }
     break;
     case 0xFA000000:
@@ -928,7 +1042,7 @@ void setFlag(uint8_t flag)
 }
 void resetFlag(uint8_t flag)
 {
-    cpu->f &= flag;
+    cpu->f &= ~flag;
 }
 
 void clearFlags()
@@ -938,10 +1052,7 @@ void clearFlags()
 
 static void ld16BitToRegister(uint16_t value, uint16_t *reg)
 {
-
-    uint8_t highByte = value >> 8;
-    uint8_t lowByte = value & 0xff;
-    *reg = (lowByte << 8) | highByte;
+    *reg = value;
 }
 
 static void ld8BitToRegister(uint8_t value, uint8_t *reg)

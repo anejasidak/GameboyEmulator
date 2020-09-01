@@ -52,4 +52,12 @@ static void test_ld8(struct s_gameboy *gameboy)
     cpuExecuteInstruction(0x46000000);
 
     printf("After storing 0x59 in memory pointed by hl reg and, 0x46 Instruction (LD B, (HL)), value in reg b is: %0x\n", gameboy->cpu.b);
+
+    cpuExecuteInstruction(0x31feff00);
+    printf("The address pointed to by stack pointer is: %0x\n", gameboy->cpu.sp);
+
+    gameboy->cpu.hl = 0x5123;
+    cpuExecuteInstruction(0xE5000000);
+    cpuExecuteInstruction(0xF1000000);
+    printf("After putting 0x5123 to register hl, and pushing it onto the stack, then popping it off the stack, it's value is: %0x\n",gameboy->cpu.af);
 }
