@@ -15,8 +15,9 @@ static uint16_t get16BitFromOpcode(uint32_t opcode);
 static void push(uint16_t value);
 static uint16_t pop();
 
-static void add_A(uint8_t value);
-static void sub_A(uint8_t value);
+static void add_8(uint8_t value);
+static void sub_8(uint8_t value);
+static void add_16(uint16_t value);
 
 static void OR(uint8_t value);
 static void AND(uint8_t value);
@@ -108,11 +109,22 @@ static int cpuExecute0(uint32_t opcode)
         memory_set(imm + 1, cpu->sp & 0xff);
     }
     break;
+    case 0x09000000:
+    {
+        add_16(cpu->bc);
+    }
+    break;
     case 0x0A000000:
     {
         ld8BitToRegister(memory_get(cpu->bc), &cpu->a);
     }
     break;
+    case 0x0B000000:
+    {
+        cpu->bc--;
+    }
+    break;
+
     case 0x0C000000:
     {
         inc(&cpu->c);
@@ -189,6 +201,11 @@ static int cpuExecute1(uint32_t opcode)
         cpu->pc += imm;
     }
     break;
+    case 0x09000000:
+    {
+        add_16(cpu->de);
+    }
+    break;
     case 0x1A000000:
     {
 
@@ -197,6 +214,12 @@ static int cpuExecute1(uint32_t opcode)
                memory_get(cpu->de), cpu->de, cpu->a);
     }
     break;
+    case 0x1B000000:
+    {
+        cpu->de--;
+    }
+    break;
+
     case 0x1C000000:
     {
         inc(&cpu->e);
@@ -280,13 +303,24 @@ static int cpuExecute2(uint32_t opcode)
         }
     }
     break;
+    case 0x09000000:
+    {
+        add_16(cpu->hl);
+    }
+    break;
     case 0x2A000000:
     {
         ld8BitToRegister(memory_get(cpu->hl), &cpu->a);
         cpu->hl++;
     }
     break;
-    case 0x2c000000:
+    case 0x2B000000:
+    {
+        cpu->hl--;
+    }
+    break;
+
+    case 0x2C000000:
     {
         inc(&cpu->l);
     }
@@ -411,6 +445,11 @@ static int cpuExecute3(uint32_t opcode)
         }
     }
     break;
+    case 0x39000000:
+    {
+        add_16(cpu->sp);
+    }
+    break;
     case 0x3A000000:
     {
         printf("Bringing value %0x at address %0x to register A\n",
@@ -419,6 +458,12 @@ static int cpuExecute3(uint32_t opcode)
         cpu->hl--;
     }
     break;
+    case 0x3B000000:
+    {
+        cpu->sp--;
+    }
+    break;
+
     case 0x3C000000:
     {
         inc(&cpu->a);
@@ -841,82 +886,82 @@ static int cpuExecute8(uint32_t opcode)
     {
     case 0x80000000:
     {
-        add_A(cpu->b);
+        add_8(cpu->b);
     }
     break;
     case 0x81000000:
     {
-        add_A(cpu->c);
+        add_8(cpu->c);
     }
     break;
     case 0x82000000:
     {
-        add_A(cpu->d);
+        add_8(cpu->d);
     }
     break;
     case 0x83000000:
     {
-        add_A(cpu->e);
+        add_8(cpu->e);
     }
     break;
     case 0x84000000:
     {
-        add_A(cpu->h);
+        add_8(cpu->h);
     }
     break;
     case 0x85000000:
     {
-        add_A(cpu->l);
+        add_8(cpu->l);
     }
     break;
     case 0x86000000:
     {
-        add_A(memory_get(cpu->hl));
+        add_8(memory_get(cpu->hl));
     }
     break;
     case 0x87000000:
     {
-        add_A(cpu->a);
+        add_8(cpu->a);
     }
     break;
     case 0x88000000:
     {
-        add_A(cpu->b + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->b + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x89000000:
     {
-        add_A(cpu->c + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->c + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x8A000000:
     {
-        add_A(cpu->d + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->d + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x8B000000:
     {
-        add_A(cpu->e + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->e + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x8C000000:
     {
-        add_A(cpu->h + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->h + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x8D000000:
     {
-        add_A(cpu->l + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->l + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x8E000000:
     {
-        add_A(memory_get(cpu->hl) + isFlagSet(FLAGS_CARRY));
+        add_8(memory_get(cpu->hl) + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x8F000000:
     {
-        add_A(cpu->a + isFlagSet(FLAGS_CARRY));
+        add_8(cpu->a + isFlagSet(FLAGS_CARRY));
     }
     break;
     default:
@@ -938,82 +983,82 @@ static int cpuExecute9(uint32_t opcode)
     {
     case 0x9000000:
     {
-        sub_A(cpu->b);
+        sub_8(cpu->b);
     }
     break;
     case 0x9100000:
     {
-        sub_A(cpu->c);
+        sub_8(cpu->c);
     }
     break;
     case 0x9200000:
     {
-        sub_A(cpu->d);
+        sub_8(cpu->d);
     }
     break;
     case 0x9300000:
     {
-        sub_A(cpu->e);
+        sub_8(cpu->e);
     }
     break;
     case 0x9400000:
     {
-        sub_A(cpu->h);
+        sub_8(cpu->h);
     }
     break;
     case 0x9500000:
     {
-        sub_A(cpu->l);
+        sub_8(cpu->l);
     }
     break;
     case 0x9600000:
     {
-        sub_A(memory_get(cpu->hl));
+        sub_8(memory_get(cpu->hl));
     }
     break;
     case 0x9700000:
     {
-        sub_A(cpu->a);
+        sub_8(cpu->a);
     }
     break;
     case 0x9800000:
     {
-        sub_A(cpu->b + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->b + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9900000:
     {
-        sub_A(cpu->c + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->c + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9A00000:
     {
-        sub_A(cpu->d + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->d + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9B00000:
     {
-        sub_A(cpu->e + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->e + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9C00000:
     {
-        sub_A(cpu->h + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->h + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9D00000:
     {
-        sub_A(cpu->l + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->l + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9E00000:
     {
-        sub_A(memory_get(cpu->hl) + isFlagSet(FLAGS_CARRY));
+        sub_8(memory_get(cpu->hl) + isFlagSet(FLAGS_CARRY));
     }
     break;
     case 0x9F00000:
     {
-        sub_A(cpu->a + isFlagSet(FLAGS_CARRY));
+        sub_8(cpu->a + isFlagSet(FLAGS_CARRY));
     }
     break;
     default:
@@ -1287,7 +1332,7 @@ static int cpuExecuteC(uint32_t opcode)
     break;
     case 0xC6000000:
     {
-        add_A((opcode & 0x00ff0000) >> 16);
+        add_8((opcode & 0x00ff0000) >> 16);
     }
     break;
     case 0xC9000000:
@@ -1326,7 +1371,7 @@ static int cpuExecuteC(uint32_t opcode)
     break;
     case 0xCE000000:
     {
-        add_A(((opcode & 0x00ff0000) >> 16) + isFlagSet(FLAGS_CARRY));
+        add_8(((opcode & 0x00ff0000) >> 16) + isFlagSet(FLAGS_CARRY));
     }
     break;
     default:
@@ -1385,7 +1430,7 @@ static int cpuExecuteD(uint32_t opcode)
     break;
     case 0xD600000:
     {
-        sub_A((opcode & 0x00ff0000) >> 16);
+        sub_8((opcode & 0x00ff0000) >> 16);
     }
     break;
     case 0xD8000000:
@@ -1417,7 +1462,7 @@ static int cpuExecuteD(uint32_t opcode)
     break;
     case 0xDE00000:
     {
-        sub_A(((opcode & 0x00ff0000) >> 16) + isFlagSet(FLAGS_CARRY));
+        sub_8(((opcode & 0x00ff0000) >> 16) + isFlagSet(FLAGS_CARRY));
     }
     break;
     default:
@@ -1466,6 +1511,31 @@ static int cpuExecuteE(uint32_t opcode)
     case 0xE6000000:
     {
         AND((opcode & 0x00ff0000) >> 16);
+    }
+    break;
+    case 0xE8000000:
+    {
+        signed char value = (opcode & 0x00ff0000) >> 16;
+
+        if ((value & 0x0f) + (cpu->sp & 0x0f) > 0x0f)
+        {
+            setFlag(FLAGS_HALFCARRY);
+        }
+        else
+        {
+            resetFlag(FLAGS_HALFCARRY);
+        }
+        if (value + cpu->hl > 0xffff)
+        {
+            setFlag(FLAGS_CARRY);
+        }
+        else
+        {
+            resetFlag(FLAGS_CARRY);
+        }
+        cpu->sp += value;
+
+        resetFlag(FLAGS_ZERO | FLAGS_NEGATIVE);
     }
     break;
     case 0xE9000000:
@@ -1692,7 +1762,7 @@ static void ld8BitToRegister(uint8_t value, uint8_t *reg)
 {
     *reg = value;
 }
-static void add_A(uint8_t value)
+static void add_8(uint8_t value)
 {
     if ((cpu->a & 0x0f) + (value & 0x0f) > 0x0f)
     {
@@ -1721,7 +1791,7 @@ static void add_A(uint8_t value)
     }
     resetFlag(FLAGS_NEGATIVE);
 }
-static void sub_A(uint8_t value)
+static void sub_8(uint8_t value)
 {
     if ((cpu->a & 0x0f) - (value & 0x0f) > 0)
     {
@@ -1749,6 +1819,29 @@ static void sub_A(uint8_t value)
         resetFlag(FLAGS_ZERO);
     }
     setFlag(FLAGS_NEGATIVE);
+}
+
+static void add_16(uint16_t value)
+{
+    if ((value & 0xff) + (cpu->hl & 0xff) > 0xff)
+    {
+        setFlag(FLAGS_HALFCARRY);
+    }
+    else
+    {
+        resetFlag(FLAGS_HALFCARRY);
+    }
+    if (value + cpu->hl > 0xffff)
+    {
+        setFlag(FLAGS_CARRY);
+    }
+    else
+    {
+        resetFlag(FLAGS_CARRY);
+    }
+    cpu->hl += value;
+
+    resetFlag(FLAGS_NEGATIVE);
 }
 static void XOR(uint8_t value)
 {
