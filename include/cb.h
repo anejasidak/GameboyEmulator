@@ -6,4 +6,5 @@
 
 void cpuExecuteCB(struct s_cpu* cpu, uint32_t opcode);
 
+void rl(uint8_t *reg);
 #endif

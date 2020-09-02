@@ -3,10 +3,10 @@
 #include <assert.h>
 #include <stdio.h>
 
-static void rl(uint8_t *reg)
+void rl(uint8_t *reg)
 {
     uint8_t carry = (*reg & 0x80) >> 7;
-    *reg <<= 1;
+    *reg = *reg << 1;
     *reg += carry;
 
     if (carry)
@@ -26,7 +26,7 @@ static void rl(uint8_t *reg)
     {
         setFlag(FLAGS_ZERO);
     }
-    resetFlag(FLAGS_HALFCARRY | FLAGS_HALFCARRY);
+    resetFlag(FLAGS_HALFCARRY | FLAGS_NEGATIVE);
 }
 
 static void bit(uint8_t b, uint8_t registerValue)

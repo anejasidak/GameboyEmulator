@@ -15,6 +15,7 @@ static uint16_t get16BitFromOpcode(uint32_t opcode);
 static void push(uint16_t value);
 static void XOR(uint8_t value);
 static void inc(uint8_t *reg);
+static void dec(uint8_t *reg);
 static void cp(uint8_t value);
 
 const uint8_t instructionSize[256] = {
@@ -80,6 +81,11 @@ static int cpuExecute0(uint32_t opcode)
         inc(&cpu->b);
     }
     break;
+    case 0x05000000:
+    {
+        dec(&cpu->b);
+    }
+    break;
     case 0x06000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->b);
@@ -101,6 +107,12 @@ static int cpuExecute0(uint32_t opcode)
     case 0x0C000000:
     {
         inc(&cpu->c);
+    }
+    break;
+
+    case 0x0D000000:
+    {
+        dec(&cpu->c);
     }
     break;
     case 0x0E000000:
@@ -146,9 +158,19 @@ static int cpuExecute1(uint32_t opcode)
         inc(&cpu->d);
     }
     break;
+    case 0x15000000:
+    {
+        dec(&cpu->d);
+    }
+    break;
     case 0x16000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->d);
+    }
+    break;
+    case 0x17000000:
+    {
+        rl(&cpu->a);
     }
     break;
     case 0x18000000:
@@ -160,12 +182,20 @@ static int cpuExecute1(uint32_t opcode)
     break;
     case 0x1A000000:
     {
+
         ld8BitToRegister(memory_get(cpu->de), &cpu->a);
+        printf("putting value %0x from address %0x. (Memory[cpu->de]) to register A. Now value at register A is %0x\n",
+               memory_get(cpu->de), cpu->de, cpu->a);
     }
     break;
     case 0x1C000000:
     {
         inc(&cpu->e);
+    }
+    break;
+    case 0x1D000000:
+    {
+        dec(&cpu->e);
     }
     break;
     case 0x1E000000:
@@ -222,6 +252,11 @@ static int cpuExecute2(uint32_t opcode)
         inc(&cpu->h);
     }
     break;
+    case 0x25000000:
+    {
+        dec(&cpu->h);
+    }
+    break;
     case 0x26000000:
     {
         ld8BitToRegister((opcode & 0x00ff0000) >> 16, &cpu->h);
@@ -245,6 +280,11 @@ static int cpuExecute2(uint32_t opcode)
     case 0x2c000000:
     {
         inc(&cpu->l);
+    }
+    break;
+    case 0x2D000000:
+    {
+        dec(&cpu->l);
     }
     break;
     case 0x2E000000:
@@ -305,13 +345,47 @@ static int cpuExecute3(uint32_t opcode)
         {
             setFlag(FLAGS_HALFCARRY);
         }
+        else
+        {
+            resetFlag(FLAGS_HALFCARRY);
+        }
+        
         val += 1;
         memory_set(cpu->hl, val);
         if (val == 0)
         {
             setFlag(FLAGS_ZERO);
         }
+        else 
+        {
+            resetFlag(FLAGS_ZERO);
+        }
         resetFlag(FLAGS_NEGATIVE);
+    }
+    break;
+    case 0x35000000:
+    {
+        uint8_t val = memory_get(cpu->hl);
+
+        if ((val & 0x0f))
+        {
+            setFlag(FLAGS_HALFCARRY);
+        }
+        else
+        {
+            resetFlag(FLAGS_HALFCARRY);
+        }
+        val -= 1;
+        memory_set(cpu->hl, val);
+        if (val == 0)
+        {
+            setFlag(FLAGS_ZERO);
+        }
+        else
+        {
+            resetFlag(FLAGS_ZERO);
+        }
+        setFlag(FLAGS_NEGATIVE);
     }
     break;
     case 0x36000000:
@@ -339,6 +413,11 @@ static int cpuExecute3(uint32_t opcode)
     case 0x3C000000:
     {
         inc(&cpu->a);
+    }
+    break;
+    case 0x3D000000:
+    {
+        dec(&cpu->a);
     }
     break;
     case 0x3E000000:
@@ -1353,6 +1432,27 @@ static void inc(uint8_t *reg)
         resetFlag(FLAGS_ZERO);
     }
     resetFlag(FLAGS_NEGATIVE);
+}
+static void dec(uint8_t *reg)
+{
+    if ((*reg & 0x0f))
+    {
+        resetFlag(FLAGS_HALFCARRY);
+    }
+    else
+    {
+        setFlag(FLAGS_HALFCARRY);
+    }
+    *reg -= 1;
+    if (*reg == 0)
+    {
+        setFlag(FLAGS_ZERO);
+    }
+    else
+    {
+        resetFlag(FLAGS_ZERO);
+    }
+    setFlag(FLAGS_NEGATIVE);
 }
 static void cp(uint8_t value)
 {

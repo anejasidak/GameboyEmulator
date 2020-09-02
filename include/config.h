@@ -37,4 +37,8 @@
 #define FLAGS_HALFCARRY (1 << 5)
 #define FLAGS_CARRY (1 << 4)
 
+// Header information
+#define HEADER_START_ADDR 0x0104
+#define HEADER_END_ADDR 0x0133
+
 #endif
