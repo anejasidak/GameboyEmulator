@@ -49,14 +49,20 @@ void executeNextInstruction()
     gameboy->cpu.pc += getInstructionSize(opcode >> 24);
 
     int x = opcode >> (8 * (4 - getInstructionSize(opcode >> 24)));
-    // char c;
+    char c;
      cpuExecuteInstruction(opcode);
 
-    if (gameboy->cpu.pc < 0x7 || gameboy->cpu.pc > 0xa)
+    if ((gameboy->cpu.pc >= 0x7 && gameboy->cpu.pc <= 0xa)
+    || (gameboy->cpu.pc >= 0x95 && gameboy->cpu.pc <= 0xa7)
+    ||  (gameboy->cpu.pc >= 0x27 && gameboy->cpu.pc <= 0x32))
     {
-        // printf("Execute instruction?\n");
-        // scanf("%c", &c);
-         printf("Executing %8x instruction\n", x);
+
+    }
+    else
+    {
+        printf("Execute instruction?\n");
+        scanf("%c", &c);
+        printf("Executing %8x instruction\n", x);
 
         printf("Pc is: %0x\n", gameboy->cpu.pc);
         printf("A: %0x \tF: %0x \tB: %0x \tC: %0x \tD: %0x \tE: %0x \tH: %0x \tL: %0x \tSP: %0x\n",
