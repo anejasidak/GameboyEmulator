@@ -1381,6 +1381,10 @@ void clearFlags()
     cpu->f = 0;
 }
 
+_Bool getFlag(uint8_t flag)
+{
+  return cpu->f & flag;  
+}
 _Bool isFlagSet(uint8_t flag)
 {
     return cpu->f & flag ? 1 : 0;

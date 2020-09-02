@@ -7,7 +7,7 @@ void rl(uint8_t *reg)
 {
     uint8_t carry = (*reg & 0x80) >> 7;
     *reg = *reg << 1;
-    *reg += carry;
+    *reg += getFlag(FLAGS_CARRY);
 
     if (carry)
     {
