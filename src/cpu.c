@@ -13,6 +13,7 @@ static void ld16BitToRegister(uint16_t value, uint16_t *reg);
 static uint16_t get16BitFromOpcode(uint32_t opcode);
 
 static void push(uint16_t value);
+static uint16_t pop();
 static void XOR(uint8_t value);
 static void inc(uint8_t *reg);
 static void dec(uint8_t *reg);
@@ -349,14 +350,14 @@ static int cpuExecute3(uint32_t opcode)
         {
             resetFlag(FLAGS_HALFCARRY);
         }
-        
+
         val += 1;
         memory_set(cpu->hl, val);
         if (val == 0)
         {
             setFlag(FLAGS_ZERO);
         }
-        else 
+        else
         {
             resetFlag(FLAGS_ZERO);
         }
@@ -983,14 +984,17 @@ static int cpuExecuteC(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xC0000000:
+    {
+        if (!isFlagSet(FLAGS_ZERO))
+        {
+            cpu->pc = pop();
+        }
+    }
+    break;
     case 0xC1000000:
     {
-        uint8_t low = memory_get(cpu->sp + 1);
-        uint8_t high = memory_get(cpu->sp + 2);
-
-        uint16_t result = (high << 8) | low;
-        ld16BitToRegister(result, &cpu->bc);
-        cpu->sp += 2;
+        ld16BitToRegister(pop(), &cpu->bc);
     }
     break;
     case 0xC2000000:
@@ -1020,7 +1024,19 @@ static int cpuExecuteC(uint32_t opcode)
         push(cpu->bc);
     }
     break;
-
+    case 0xC8000000:
+    {
+        if (isFlagSet(FLAGS_ZERO))
+        {
+            cpu->pc = pop();
+        }
+    }
+    break;
+    case 0xC9000000:
+    {
+        cpu->pc = pop();
+    }
+    break;
     case 0xCA000000:
     {
         if (isFlagSet(FLAGS_ZERO))
@@ -1067,14 +1083,17 @@ static int cpuExecuteD(uint32_t opcode)
 
     switch (instructionCode)
     {
+    case 0xD0000000:
+    {
+        if (!isFlagSet(FLAGS_CARRY))
+        {
+            cpu->pc = pop();
+        }
+    }
+    break;
     case 0xD1000000:
     {
-        uint8_t low = memory_get(cpu->sp + 1);
-        uint8_t high = memory_get(cpu->sp + 2);
-
-        uint16_t result = (high << 8) | low;
-        ld16BitToRegister(result, &cpu->de);
-        cpu->sp += 2;
+        ld16BitToRegister(pop(), &cpu->de);
     }
     break;
     case 0xD2000000:
@@ -1099,6 +1118,14 @@ static int cpuExecuteD(uint32_t opcode)
     case 0xD5000000:
     {
         push(cpu->de);
+    }
+    break;
+    case 0xD8000000:
+    {
+        if (isFlagSet(FLAGS_CARRY))
+        {
+            cpu->pc = pop();
+        }
     }
     break;
     case 0xDA000000:
@@ -1147,12 +1174,7 @@ static int cpuExecuteE(uint32_t opcode)
     break;
     case 0xE1000000:
     {
-        uint8_t low = memory_get(cpu->sp + 1);
-        uint8_t high = memory_get(cpu->sp + 2);
-
-        uint16_t result = (high << 8) | low;
-        ld16BitToRegister(result, &cpu->hl);
-        cpu->sp += 2;
+        ld16BitToRegister(pop(), &cpu->hl);
     }
     break;
     case 0xE2000000:
@@ -1207,12 +1229,8 @@ static int cpuExecuteF(uint32_t opcode)
     break;
     case 0xF1000000:
     {
-        uint8_t low = memory_get(cpu->sp + 1);
-        uint8_t high = memory_get(cpu->sp + 2);
 
-        uint16_t result = (high << 8) | low;
-        ld16BitToRegister(result, &cpu->af);
-        cpu->sp += 2;
+        ld16BitToRegister(pop(), &cpu->af);
     }
     break;
     case 0xF2000000:
@@ -1381,10 +1399,6 @@ void clearFlags()
     cpu->f = 0;
 }
 
-_Bool getFlag(uint8_t flag)
-{
-  return cpu->f & flag;  
-}
 _Bool isFlagSet(uint8_t flag)
 {
     return cpu->f & flag ? 1 : 0;
@@ -1415,6 +1429,15 @@ static void push(uint16_t value)
     memory_set(cpu->sp, (value & 0xff00) >> 8);
     memory_set(cpu->sp - 1, value & 0xff);
     cpu->sp -= 2;
+}
+static uint16_t pop()
+{
+    uint8_t low = memory_get(cpu->sp + 1);
+    uint8_t high = memory_get(cpu->sp + 2);
+
+    uint16_t result = (high << 8) | low;
+    cpu->sp += 2;
+    return result;
 }
 static void inc(uint8_t *reg)
 {
